@@ -4,27 +4,29 @@ const UserSchema = new Schema(
   {
     name: {
       type: String,
-      required: true
+      required: true,
     },
     email: {
       type: String,
-      required: true
+      required: true,
     },
     role: {
       type: String,
       default: "user",
-      enum: ["user", "admin", "superadmin"]
+      enum: ["user", "admin", "superadmin"],
     },
     username: {
       type: String,
-      required: true
+      required: true,
     },
     password: {
       type: String,
-      required: true
+      required: true,
     },
+    posted: [{ type:Schema.Types.ObjectId, ref: "blogs" }],
   },
   { timestamps: true }
 );
+
 
 module.exports = model("users", UserSchema);

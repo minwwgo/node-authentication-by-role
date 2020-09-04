@@ -2,9 +2,11 @@ const cors = require("cors");
 const exp = require("express");
 const bodyParser = require("body-parser");
 const morgan= require("morgan");
+const passport = require("passport");
 
 const { connect } = require("mongoose");
 const { success, error } = require("consola");
+
 
 // App env
 const { DB, PORT } = require("./config/index");
@@ -16,11 +18,15 @@ const app = exp();
 app.use(cors())
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(passport.initialize())
 
 app.use(morgan("dev"));
 
+require('./middlewares/passport')(passport)
+
 // User Router Middleware
 app.use('/api/users', require('./routes/users'));
+app.use("/api/blogs", require("./routes/blogs"));
 
 const startApp = async () => {
   try {

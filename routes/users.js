@@ -1,34 +1,10 @@
 const router = require("express").Router();
 // bring in the User Registeration 
-const  {userRegister}  = require("../utils/auth");
+const  {userRegister,userLogin,userAuth,serializeUser,checkRole}  = require("../utils/auth");
 
-//const User = require("../models/User");
+const User = require("../models/User");
+const Blog = require("../models/Blog")
 
-// // test route
-// router.get("/", (req,res)=>{
-//   User.find().then((user) => res.status(200).json(user));
-// })
-// router.post("/",(req,res)=>{
-  
-//     const resource = new User({
-//       name: req.body.name,
-//       email: req.body.email
-//     })
-//     resource
-//       .save()
-//       .then((resource) => {
-//         res.status(201).json({
-//           message: "new resource created",
-//           resource: resource,
-//         });
-//       })
-//       .catch((err) => {
-//         console.log(err);
-//         res.status(500).json({
-//           error: err,
-//         });
-//       });
-// } )
 
 //Users Registration Route
 router.post('/register-user', async (req,res)=>{
@@ -45,23 +21,79 @@ router.post("/register-super-admin", async (req, res) => {
   await userRegister(req.body,'superadmin',res)
 });
 
-
-
 //Users  login Route
-router.post("/login-user", async (req, res) => {});
+router.post("/login-user", async (req, res) => {
+  await userLogin(req.body,'user',res)
+});
 // Admin login Route
-router.post("/login-admin", async (req, res) => {});
+router.post("/login-admin", async (req, res) => {
+  await userLogin(req.body,'admin',res)
+});
 // Super Admin login Route
-router.post("/login-super-admin", async (req, res) => {});
+router.post("/login-super-admin", async (req, res) => {
+  await userLogin(req.body,'super-admin',res)
+});
 
 //Profile Route 
-router.get("profile", async (req,res)=>{});
+router.get("/profile",userAuth,(req,res)=>{
+  return res.json(serializeUser(req.user));
+});
+
 
 //Users  Protected Route
-router.post("/user-protected", async (req, res) => {});
+router.get(
+  "/user-protected",
+  userAuth,
+  checkRole(['user']),
+   async (req, res) => {
+     
+     return res.json(serializeUser(req.user));
+   });
 // Admin Protected Route
-router.post("/admin-protected", async (req, res) => {});
+router.get(
+  "/admin-protected",
+  userAuth,
+  checkRole(["admin"]),
+  async (req, res) => {
+    return res.json(serializeUser(req.user));
+  }
+);
 // Super Adminr Protected Route
-router.post("/super-admin-protected", async (req, res) => {});
+router.get(
+  "/super-admin-protected",
+  userAuth,
+  checkRole(["admin"]),
+
+  async (req, res) => {
+    return res.json(serializeUser(req.user));
+  }
+);
+
+router.get("/",(req,res)=>{
+  User.find()
+    
+    .then((users) => res.json(users));
+})
+
+router.get("/:userId",(req,res)=>{
+  const userId = req.params.userId;
+  User.findById(userId)
+    .populate("posted")
+    .then((user) => res.json({ user: user }))
+    .catch((err) => res.json({ err: err }));
+})
+
+router.post("/:id/blog",(req,res)=>{
+  User.findById(req.params.id)
+  
+  .then(async user=>{ 
+    const newBlog = new Blog(req.body)
+    user.posted.push(newBlog);
+    await user.save()
+    await newBlog.save()
+    res.json(user)
+  })
+  .catch(err=>res.status(500).json({Error:err}))
+})
 
 module.exports = router;
